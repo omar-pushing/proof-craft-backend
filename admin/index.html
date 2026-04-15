@@ -1,0 +1,718 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="X-Frame-Options" content="DENY">
+<meta http-equiv="X-Content-Type-Options" content="nosniff">
+<title>ProofCraft Admin</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Lato:wght@400;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Lato',sans-serif;background:#F0EDE6;color:#1C1A16;min-height:100vh}
+:root{
+  --accent:#2A4A3C;--accent2:#3D6E5A;--accent-light:#E6EFEB;
+  --gold:#9B7228;--red:#C0392B;
+  --bg:#F0EDE6;--surface:#fff;--surface2:#F8F6F1;
+  --border:#DDD9CF;--border2:#C8C3B7;
+  --text:#1C1A16;--text2:#5C5850;--text3:#9C9890;
+  --r:8px;--r-lg:12px;
+}
+/* ─── LOGIN ─── */
+.login-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;background:var(--accent);padding:20px}
+.login-card{background:#fff;border-radius:16px;padding:40px 36px;width:100%;max-width:400px;box-shadow:0 20px 60px rgba(0,0,0,.2)}
+.login-logo{font-family:'Playfair Display',serif;font-size:26px;color:var(--accent);text-align:center;margin-bottom:4px}
+.login-logo span{color:var(--gold)}
+.login-sub{text-align:center;font-size:13px;color:var(--text3);margin-bottom:28px}
+.login-err{background:#FEF2F0;border:1px solid #FECACA;border-radius:8px;padding:10px 14px;font-size:13px;color:var(--red);margin-bottom:14px}
+/* ─── LAYOUT ─── */
+.app{display:grid;grid-template-columns:220px 1fr;min-height:100vh;display:none}
+.sidebar{background:var(--text);display:flex;flex-direction:column}
+.sidebar-logo{padding:20px 18px 16px;font-family:'Playfair Display',serif;font-size:20px;color:#fff;border-bottom:1px solid rgba(255,255,255,.08)}
+.sidebar-logo span{color:#D4A843}
+.sidebar-section{padding:16px 18px 8px;font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.3)}
+.nav-item{display:flex;align-items:center;gap:10px;padding:10px 18px;font-size:13px;font-weight:500;color:rgba(255,255,255,.55);cursor:pointer;transition:all .15s;border-left:3px solid transparent}
+.nav-item:hover{color:#fff;background:rgba(255,255,255,.06)}
+.nav-item.active{color:#fff;background:rgba(255,255,255,.09);border-left-color:#D4A843}
+.sidebar-footer{margin-top:auto;padding:16px 18px;border-top:1px solid rgba(255,255,255,.08)}
+.logout-btn{width:100%;padding:8px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);border-radius:var(--r);color:rgba(255,255,255,.6);font-size:13px;cursor:pointer;font-family:inherit;transition:all .15s}
+.logout-btn:hover{background:rgba(255,255,255,.14);color:#fff}
+/* ─── MAIN ─── */
+.main{background:var(--bg);overflow-y:auto}
+.topbar{background:var(--surface);border-bottom:1px solid var(--border);padding:0 28px;height:56px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:10}
+.topbar-title{font-size:16px;font-weight:700;color:var(--text)}
+.content{padding:28px;max-width:1200px}
+/* ─── PAGES ─── */
+.page{display:none}
+.page.active{display:block}
+/* ─── CARDS & GRIDS ─── */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);padding:22px}
+.stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);padding:20px}
+.stat-num{font-family:'Playfair Display',serif;font-size:36px;font-weight:700;color:var(--accent);line-height:1;margin-bottom:4px}
+.stat-label{font-size:13px;color:var(--text2)}
+.stat-change{font-size:12px;color:var(--accent2);margin-top:3px}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+/* ─── TABLE ─── */
+.tbl{width:100%;border-collapse:collapse;font-size:14px}
+.tbl th{text-align:left;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text3);padding:10px 14px;border-bottom:2px solid var(--border);white-space:nowrap}
+.tbl td{padding:12px 14px;border-bottom:1px solid var(--border);vertical-align:middle}
+.tbl tr:last-child td{border-bottom:none}
+.tbl tr:hover td{background:var(--surface2)}
+/* ─── FORM ─── */
+.field{margin-bottom:14px}
+.field:last-child{margin-bottom:0}
+label{display:block;font-size:13px;font-weight:700;color:var(--text2);margin-bottom:5px}
+input[type=text],input[type=email],input[type=url],input[type=password],textarea,select{
+  width:100%;padding:9px 13px;border:1px solid var(--border2);border-radius:var(--r);
+  font-family:inherit;font-size:14px;color:var(--text);background:var(--surface);
+  outline:none;transition:border .15s;resize:vertical}
+input:focus,textarea:focus,select:focus{border-color:var(--accent2);box-shadow:0 0 0 3px rgba(42,74,60,.07)}
+select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' fill='none'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%239C9890' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;padding-right:32px}
+/* ─── BUTTONS ─── */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:9px 18px;border-radius:var(--r);font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;transition:all .15s;border:1px solid transparent}
+.btn-primary{background:var(--accent);color:#fff;border-color:var(--accent)}
+.btn-primary:hover{background:#1C3329}
+.btn-secondary{background:var(--surface);color:var(--text2);border-color:var(--border2)}
+.btn-secondary:hover{border-color:var(--border);color:var(--text);background:var(--surface2)}
+.btn-danger{background:#FEF2F0;color:var(--red);border-color:#FECACA}
+.btn-danger:hover{background:#fee2e2}
+.btn-gold{background:var(--gold);color:#fff;border-color:var(--gold)}
+.btn-sm{padding:6px 12px;font-size:12px}
+.btn-xs{padding:4px 9px;font-size:11px}
+/* ─── TAGS ─── */
+.tag{display:inline-flex;align-items:center;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700}
+.tag-green{background:var(--accent-light);color:var(--accent)}
+.tag-gold{background:#FBF5E8;color:var(--gold)}
+.tag-gray{background:var(--surface2);color:var(--text2)}
+.tag-red{background:#FEF2F0;color:var(--red)}
+.tag-blue{background:#EFF6FF;color:#1E40AF}
+/* ─── MODAL ─── */
+.modal-ov{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:500;display:flex;align-items:center;justify-content:center;padding:20px}
+.modal-ov.hidden{display:none}
+.modal{background:var(--surface);border-radius:var(--r-lg);padding:28px;max-width:520px;width:100%;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.15)}
+.modal-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px}
+.modal-title{font-size:18px;font-weight:700;font-family:'Playfair Display',serif}
+.modal-close{background:none;border:none;font-size:22px;cursor:pointer;color:var(--text3);line-height:1}
+.modal-close:hover{color:var(--text)}
+/* ─── TOAST ─── */
+.toast{position:fixed;bottom:24px;right:24px;padding:12px 20px;border-radius:var(--r-lg);font-size:13px;font-weight:600;z-index:999;transform:translateY(80px);transition:transform .3s ease;box-shadow:0 8px 24px rgba(0,0,0,.15);max-width:320px}
+.toast.show{transform:none}
+.toast.success{background:var(--accent);color:#fff}
+.toast.error{background:var(--red);color:#fff}
+.toast.info{background:var(--text);color:#fff}
+/* ─── CONTENT EDITABLE AREAS ─── */
+.editor-area{border:1px solid var(--border2);border-radius:var(--r);padding:12px;font-size:14px;min-height:80px;line-height:1.6;background:var(--surface);outline:none}
+.editor-area:focus{border-color:var(--accent2)}
+/* ─── MISC ─── */
+.divider{height:1px;background:var(--border);margin:20px 0}
+.section-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px}
+.section-title{font-size:18px;font-weight:700;font-family:'Playfair Display',serif}
+.empty-state{text-align:center;padding:48px 24px;color:var(--text3)}
+.empty-state svg{margin:0 auto 12px;display:block;opacity:.4}
+.badge-dot{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:6px}
+.badge-dot.green{background:#22C55E}
+.badge-dot.red{background:var(--red)}
+.col-2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.mt-12{margin-top:12px}.mt-16{margin-top:16px}.mt-20{margin-top:20px}.mb-16{margin-bottom:16px}.mb-20{margin-bottom:20px}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login-screen" class="login-wrap">
+  <div class="login-card">
+    <div class="login-logo">Proof<span>Craft</span></div>
+    <div class="login-sub">Admin Dashboard — Authorized Access Only</div>
+    <div id="login-err" class="login-err" style="display:none"></div>
+    <form onsubmit="doLogin(event)">
+      <div class="field"><label>Username</label><input type="text" id="l-user" placeholder="Omar_The_Innovator" required autocomplete="username"></div>
+      <div class="field"><label>Password</label><input type="password" id="l-pass" placeholder="••••••••" required autocomplete="current-password"></div>
+      <button type="submit" class="btn btn-primary" style="width:100%;margin-top:6px;justify-content:center;padding:12px" id="login-btn">Sign In to Admin →</button>
+    </form>
+  </div>
+</div>
+
+<!-- ADMIN APP -->
+<div id="admin-app" class="app">
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <div class="sidebar-logo">Proof<span>Craft</span> <span style="font-size:11px;opacity:.4;font-family:Lato;font-weight:400">Admin</span></div>
+    <div class="sidebar-section">Analytics</div>
+    <div class="nav-item active" onclick="nav('dashboard',this)"><span>📊</span> Dashboard</div>
+    <div class="nav-item" onclick="nav('users',this)"><span>👥</span> Users</div>
+    <div class="sidebar-section">Content</div>
+    <div class="nav-item" onclick="nav('homepage',this)"><span>🏠</span> Home Page</div>
+    <div class="nav-item" onclick="nav('about',this)"><span>👤</span> About Page</div>
+    <div class="nav-item" onclick="nav('faqs',this)"><span>❓</span> FAQs</div>
+    <div class="nav-item" onclick="nav('testimonials',this)"><span>⭐</span> Testimonials</div>
+    <div class="sidebar-section">Inbox</div>
+    <div class="nav-item" onclick="nav('feedback',this)"><span>📬</span> Feedback <span id="feedback-badge" style="display:none;background:#C0392B;color:#fff;border-radius:10px;padding:1px 7px;font-size:10px;margin-left:auto"></span></div>
+    <div class="sidebar-footer">
+      <div style="font-size:12px;color:rgba(255,255,255,.3);margin-bottom:8px" id="admin-name-display"></div>
+      <button class="logout-btn" onclick="doLogout()">← Sign Out</button>
+    </div>
+  </div>
+
+  <!-- Main -->
+  <div class="main">
+    <div class="topbar">
+      <div class="topbar-title" id="topbar-title">Dashboard</div>
+      <div style="display:flex;align-items:center;gap:12px">
+        <span style="font-size:12px;color:var(--text3)">proof-craft-backend.vercel.app</span>
+        <span style="display:flex;align-items:center;font-size:12px;color:var(--accent2);font-weight:600"><span class="badge-dot green"></span>Live</span>
+      </div>
+    </div>
+    <div class="content">
+
+      <!-- DASHBOARD -->
+      <div id="page-dashboard" class="page active">
+        <div class="stat-grid" id="stat-grid">
+          <div class="stat-card"><div class="stat-num" id="s-users">—</div><div class="stat-label">Total Users</div><div class="stat-change" id="s-users-w">Loading…</div></div>
+          <div class="stat-card"><div class="stat-num" id="s-cvs">—</div><div class="stat-label">CVs Created</div><div class="stat-change" id="s-cvs-w"></div></div>
+          <div class="stat-card"><div class="stat-num" id="s-cases">—</div><div class="stat-label">Published Case Studies</div></div>
+          <div class="stat-card"><div class="stat-num" id="s-feedback">—</div><div class="stat-label">Feedback Received</div></div>
+        </div>
+        <div class="grid-2" style="gap:20px">
+          <div class="card">
+            <div class="section-header"><div class="section-title" style="font-size:15px">Recent Users</div></div>
+            <table class="tbl"><thead><tr><th>Name</th><th>Email</th><th>CVs</th><th>Joined</th></tr></thead>
+            <tbody id="recent-users-table"><tr><td colspan="4" style="text-align:center;color:var(--text3);padding:20px">Loading…</td></tr></tbody></table>
+          </div>
+          <div class="card">
+            <div class="section-header"><div class="section-title" style="font-size:15px">Recent Feedback</div><button class="btn btn-sm btn-secondary" onclick="nav('feedback',document.querySelector('.nav-item:nth-child(11))'))">View All</button></div>
+            <table class="tbl"><thead><tr><th>From</th><th>Subject</th><th>Rating</th><th>Status</th></tr></thead>
+            <tbody id="recent-feedback-table"><tr><td colspan="4" style="text-align:center;color:var(--text3);padding:20px">Loading…</td></tr></tbody></table>
+          </div>
+        </div>
+      </div>
+
+      <!-- USERS -->
+      <div id="page-users" class="page">
+        <div class="section-header"><div class="section-title">Users</div><span id="users-count" style="font-size:13px;color:var(--text3)"></span></div>
+        <div class="card">
+          <table class="tbl"><thead><tr><th>Name</th><th>Email</th><th>CVs</th><th>Case Studies</th><th>Joined</th><th>Action</th></tr></thead>
+          <tbody id="users-table"><tr><td colspan="6" style="text-align:center;padding:24px;color:var(--text3)">Loading…</td></tr></tbody></table>
+        </div>
+      </div>
+
+      <!-- HOME PAGE -->
+      <div id="page-homepage" class="page">
+        <div class="section-header"><div class="section-title">Home Page Content</div><button class="btn btn-primary" onclick="saveHomeContent()">Save Changes</button></div>
+        <div class="card mb-20">
+          <h4 class="mb-16" style="font-size:15px;font-weight:700">Hero Section</h4>
+          <div class="field"><label>Main Headline</label><input type="text" id="hc-headline" placeholder="Turn Your Experience Into Proof…"></div>
+          <div class="field"><label>Sub-headline</label><textarea id="hc-sub" rows="2" placeholder="Supporting line under the headline…"></textarea></div>
+        </div>
+        <div class="card mb-20">
+          <h4 class="mb-16" style="font-size:15px;font-weight:700">CTA Section</h4>
+          <div class="field"><label>CTA Headline</label><input type="text" id="hc-cta-headline" placeholder="Ready to stand out?"></div>
+          <div class="field"><label>CTA Sub-text</label><input type="text" id="hc-cta-sub" placeholder="Supporting line for the CTA…"></div>
+        </div>
+        <div class="card">
+          <h4 class="mb-16" style="font-size:15px;font-weight:700">Footer</h4>
+          <div class="field"><label>Footer Tagline</label><input type="text" id="hc-footer" placeholder="Turn your experience into proof…"></div>
+        </div>
+      </div>
+
+      <!-- ABOUT PAGE -->
+      <div id="page-about" class="page">
+        <div class="section-header"><div class="section-title">About Page</div><button class="btn btn-primary" onclick="saveAboutContent()">Save Changes</button></div>
+        <div class="card mb-20">
+          <h4 class="mb-16" style="font-size:15px;font-weight:700">Hero</h4>
+          <div class="field"><label>Headline</label><input type="text" id="ac-headline"></div>
+          <div class="field"><label>Sub-headline</label><textarea id="ac-sub" rows="2"></textarea></div>
+        </div>
+        <div class="card mb-20">
+          <h4 class="mb-16" style="font-size:15px;font-weight:700">Our Story</h4>
+          <div class="field"><label>Section Title</label><input type="text" id="ac-story-title"></div>
+          <div class="field"><label>Paragraph 1</label><textarea id="ac-story-p1" rows="3"></textarea></div>
+          <div class="field"><label>Paragraph 2</label><textarea id="ac-story-p2" rows="2"></textarea></div>
+        </div>
+        <div class="card">
+          <h4 class="mb-16" style="font-size:15px;font-weight:700">Team Photo</h4>
+          <div class="field"><label>Image URL</label><input type="url" id="ac-photo" placeholder="https://your-image.jpg" oninput="previewPhoto(this.value)"></div>
+          <div id="photo-preview" style="margin-top:12px;display:none"><img id="photo-img" src="" style="max-width:100%;border-radius:10px;max-height:240px;object-fit:cover" alt="Preview"></div>
+        </div>
+      </div>
+
+      <!-- FAQs -->
+      <div id="page-faqs" class="page">
+        <div class="section-header"><div class="section-title">FAQs</div><button class="btn btn-primary" onclick="openFaqModal()">+ Add FAQ</button></div>
+        <div class="card">
+          <table class="tbl"><thead><tr><th>#</th><th>Question</th><th>Active</th><th>Actions</th></tr></thead>
+          <tbody id="faqs-table"><tr><td colspan="4" style="text-align:center;padding:24px;color:var(--text3)">Loading…</td></tr></tbody></table>
+        </div>
+      </div>
+
+      <!-- TESTIMONIALS -->
+      <div id="page-testimonials" class="page">
+        <div class="section-header"><div class="section-title">Testimonials</div><button class="btn btn-primary" onclick="openTestimonialModal()">+ Add</button></div>
+        <div class="card">
+          <table class="tbl"><thead><tr><th>Name</th><th>Role</th><th>Quote</th><th>Active</th><th>Actions</th></tr></thead>
+          <tbody id="testimonials-table"><tr><td colspan="5" style="text-align:center;padding:24px;color:var(--text3)">Loading…</td></tr></tbody></table>
+        </div>
+      </div>
+
+      <!-- FEEDBACK -->
+      <div id="page-feedback" class="page">
+        <div class="section-header">
+          <div class="section-title">Feedback Inbox</div>
+          <div style="display:flex;gap:8px">
+            <button class="btn btn-sm btn-secondary" onclick="loadFeedback('new')">New</button>
+            <button class="btn btn-sm btn-secondary" onclick="loadFeedback('read')">Read</button>
+            <button class="btn btn-sm btn-secondary" onclick="loadFeedback('')">All</button>
+          </div>
+        </div>
+        <div class="card">
+          <table class="tbl">
+            <thead><tr><th>From</th><th>Subject</th><th>Rating</th><th>Date</th><th>Status</th><th>Actions</th></tr></thead>
+            <tbody id="feedback-table"><tr><td colspan="6" style="text-align:center;padding:24px;color:var(--text3)">Loading…</td></tr></tbody>
+          </table>
+        </div>
+        <!-- Feedback detail panel -->
+        <div id="feedback-detail" style="display:none;margin-top:20px">
+          <div class="card">
+            <div class="section-header" style="margin-bottom:14px">
+              <div class="section-title" style="font-size:15px" id="fd-subject"></div>
+              <button class="btn btn-sm btn-secondary" onclick="document.getElementById('feedback-detail').style.display='none'">Close</button>
+            </div>
+            <div style="display:grid;grid-template-columns:auto 1fr;gap:6px 16px;font-size:13px;margin-bottom:16px">
+              <span style="color:var(--text3);font-weight:700">From:</span><span id="fd-from"></span>
+              <span style="color:var(--text3);font-weight:700">Email:</span><a id="fd-email" href="#" style="color:var(--accent2)"></a>
+              <span style="color:var(--text3);font-weight:700">Rating:</span><span id="fd-rating"></span>
+              <span style="color:var(--text3);font-weight:700">Date:</span><span id="fd-date"></span>
+            </div>
+            <div style="background:var(--surface2);border-left:3px solid var(--accent);border-radius:4px;padding:14px;font-size:14px;line-height:1.7;color:var(--text)" id="fd-message"></div>
+            <div style="margin-top:14px;display:flex;gap:8px">
+              <a id="fd-reply-btn" href="#" class="btn btn-primary btn-sm">Reply via Email</a>
+              <button onclick="markFeedback(currentFeedbackId,'read')" class="btn btn-secondary btn-sm">Mark Read</button>
+              <button onclick="deleteFeedback(currentFeedbackId)" class="btn btn-danger btn-sm">Delete</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /content -->
+  </div><!-- /main -->
+</div><!-- /app -->
+
+<!-- Modals -->
+<div id="faq-modal" class="modal-ov hidden">
+  <div class="modal">
+    <div class="modal-header"><div class="modal-title" id="faq-modal-title">Add FAQ</div><button class="modal-close" onclick="closeModal('faq-modal')">×</button></div>
+    <input type="hidden" id="faq-edit-id">
+    <div class="field"><label>Question *</label><input type="text" id="faq-q" placeholder="e.g. Is ProofCraft really free?"></div>
+    <div class="field"><label>Answer *</label><textarea id="faq-a" rows="4" placeholder="Yes, ProofCraft is completely free…"></textarea></div>
+    <div class="field"><label>Active</label><select id="faq-active"><option value="true">Yes — show on site</option><option value="false">No — hide from site</option></select></div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:16px">
+      <button class="btn btn-secondary" onclick="closeModal('faq-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveFaq()">Save FAQ</button>
+    </div>
+  </div>
+</div>
+
+<div id="testimonial-modal" class="modal-ov hidden">
+  <div class="modal">
+    <div class="modal-header"><div class="modal-title" id="t-modal-title">Add Testimonial</div><button class="modal-close" onclick="closeModal('testimonial-modal')">×</button></div>
+    <input type="hidden" id="t-edit-id">
+    <div class="col-2">
+      <div class="field"><label>Full Name *</label><input type="text" id="t-name" placeholder="Sara Ahmed"></div>
+      <div class="field"><label>Role & Company *</label><input type="text" id="t-role" placeholder="PM at Acme Corp"></div>
+    </div>
+    <div class="field"><label>Initials (2-3 chars)</label><input type="text" id="t-initials" placeholder="SA" maxlength="3"></div>
+    <div class="field"><label>Quote *</label><textarea id="t-quote" rows="4" placeholder="What they said about ProofCraft…"></textarea></div>
+    <div class="field"><label>Active</label><select id="t-active"><option value="true">Yes</option><option value="false">No</option></select></div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:16px">
+      <button class="btn btn-secondary" onclick="closeModal('testimonial-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveTestimonial()">Save</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script>
+const API = ''; // relative — served from same origin (proof-craft-backend.vercel.app)
+let token = localStorage.getItem('admin_token');
+let currentFeedbackId = null;
+
+// ── Helpers ──────────────────────────────────────
+function $id(id) { return document.getElementById(id); }
+function toast(msg, type='info') {
+  const t = $id('toast');
+  t.textContent = msg;
+  t.className = 'toast show ' + type;
+  setTimeout(() => t.classList.remove('show'), 3500);
+}
+function closeModal(id) { $id(id).classList.add('hidden'); }
+function fmt(dateStr) { return new Date(dateStr).toLocaleDateString('en-GB', { day:'2-digit', month:'short', year:'numeric' }); }
+function sanitize(s) { return String(s||'').replace(/[<>"'&]/g, c => ({'<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#39;",'&':'&amp;'}[c])); }
+
+async function req(method, path, body) {
+  const opts = { method, headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` } };
+  if (body) opts.body = JSON.stringify(body);
+  const res = await fetch(`/api/admin${path}`, opts);
+  if (res.status === 401) { doLogout(); return null; }
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'Request failed');
+  return data;
+}
+
+// ── Login ────────────────────────────────────────
+async function doLogin(e) {
+  e.preventDefault();
+  const btn = $id('login-btn');
+  btn.textContent = 'Signing in…'; btn.disabled = true;
+  $id('login-err').style.display = 'none';
+  try {
+    const res = await fetch('/api/admin/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username: $id('l-user').value, password: $id('l-pass').value })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Login failed');
+    token = data.token;
+    localStorage.setItem('admin_token', token);
+    showApp(data.admin.username);
+  } catch(err) {
+    $id('login-err').textContent = err.message;
+    $id('login-err').style.display = 'block';
+    btn.textContent = 'Sign In to Admin →'; btn.disabled = false;
+  }
+}
+
+function showApp(username) {
+  $id('login-screen').style.display = 'none';
+  $id('admin-app').style.display = 'grid';
+  $id('admin-name-display').textContent = `Signed in as ${username}`;
+  loadDashboard();
+}
+
+function doLogout() {
+  localStorage.removeItem('admin_token');
+  token = null;
+  $id('admin-app').style.display = 'none';
+  $id('login-screen').style.display = 'flex';
+}
+
+// Check existing session on load
+if (token) {
+  // Verify token is still valid
+  fetch('/api/admin/dashboard', { headers: { Authorization: `Bearer ${token}` } })
+    .then(r => { if (r.ok) { r.json().then(d => { showApp('Omar_The_Innovator'); }); } else { token = null; localStorage.removeItem('admin_token'); } })
+    .catch(() => {});
+}
+
+// ── Navigation ────────────────────────────────────
+const pageTitles = { dashboard:'Dashboard', users:'Users', homepage:'Home Page', about:'About Page', faqs:'FAQs', testimonials:'Testimonials', feedback:'Feedback Inbox' };
+const pageLoaders = { dashboard: loadDashboard, users: loadUsers, homepage: loadHomeContent, about: loadAboutContent, faqs: loadFaqs, testimonials: loadTestimonials, feedback: ()=>loadFeedback('') };
+
+function nav(pageId, el) {
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  if (el) el.classList.add('active');
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  $id('page-' + pageId).classList.add('active');
+  $id('topbar-title').textContent = pageTitles[pageId] || pageId;
+  if (pageLoaders[pageId]) pageLoaders[pageId]();
+}
+
+// ── Dashboard ─────────────────────────────────────
+async function loadDashboard() {
+  try {
+    const d = await req('GET', '/dashboard');
+    if (!d) return;
+    $id('s-users').textContent = d.users;
+    $id('s-cvs').textContent = d.cvs;
+    $id('s-cases').textContent = d.caseStudies;
+    $id('s-feedback').textContent = d.feedbacks;
+    $id('s-users-w').textContent = `+${d.weeklySignups} this week`;
+    $id('s-cvs-w').textContent = `+${d.weeklyCvs} this week`;
+
+    $id('recent-users-table').innerHTML = d.recentUsers.length
+      ? d.recentUsers.map(u => `<tr><td><strong>${sanitize(u.name)}</strong></td><td style="color:var(--text2)">${sanitize(u.email)}</td><td>${u.cvCount||0}</td><td>${fmt(u.createdAt)}</td></tr>`).join('')
+      : '<tr><td colspan="4" style="text-align:center;color:var(--text3);padding:16px">No users yet</td></tr>';
+
+    $id('recent-feedback-table').innerHTML = d.recentFeedback.length
+      ? d.recentFeedback.map(f => `<tr><td>${sanitize(f.name)}</td><td>${sanitize(f.subject)}</td><td>${'⭐'.repeat(f.rating||0)||'—'}</td><td><span class="tag ${f.status==='new'?'tag-red':'tag-gray'}">${f.status}</span></td></tr>`).join('')
+      : '<tr><td colspan="4" style="text-align:center;color:var(--text3);padding:16px">No feedback yet</td></tr>';
+
+    // Update feedback badge
+    const newFb = d.recentFeedback.filter(f=>f.status==='new').length;
+    const badge = $id('feedback-badge');
+    if (newFb > 0) { badge.textContent = newFb; badge.style.display = 'inline'; }
+  } catch(e) { toast('Failed to load dashboard: ' + e.message, 'error'); }
+}
+
+// ── Users ─────────────────────────────────────────
+async function loadUsers() {
+  try {
+    const d = await req('GET', '/users');
+    if (!d) return;
+    $id('users-count').textContent = `${d.total} total`;
+    $id('users-table').innerHTML = d.users.length
+      ? d.users.map(u => `<tr>
+          <td><strong>${sanitize(u.name)}</strong></td>
+          <td style="color:var(--text2)">${sanitize(u.email)}</td>
+          <td>${u.cvCount||0}</td>
+          <td>${u.csCount||0}</td>
+          <td>${fmt(u.createdAt)}</td>
+          <td><button class="btn btn-danger btn-xs" onclick="deleteUser('${u._id}','${sanitize(u.name)}')">Delete</button></td>
+        </tr>`).join('')
+      : '<tr><td colspan="6" style="text-align:center;padding:24px;color:var(--text3)">No users yet</td></tr>';
+  } catch(e) { toast('Failed to load users', 'error'); }
+}
+
+async function deleteUser(id, name) {
+  if (!confirm(`Delete user "${name}"? This cannot be undone.`)) return;
+  try {
+    await req('DELETE', `/users/${id}`);
+    toast('User deleted', 'success');
+    loadUsers();
+  } catch { toast('Failed to delete user', 'error'); }
+}
+
+// ── Home Page Content ─────────────────────────────
+async function loadHomeContent() {
+  try {
+    const d = await req('GET', '/content');
+    if (!d) return;
+    $id('hc-headline').value = d.hero_headline || '';
+    $id('hc-sub').value = d.hero_sub || '';
+    $id('hc-cta-headline').value = d.cta_headline || '';
+    $id('hc-cta-sub').value = d.cta_sub || '';
+    $id('hc-footer').value = d.footer_tagline || '';
+  } catch(e) { toast('Failed to load content', 'error'); }
+}
+
+async function saveHomeContent() {
+  try {
+    await req('PUT', '/content', {
+      hero_headline: $id('hc-headline').value,
+      hero_sub: $id('hc-sub').value,
+      cta_headline: $id('hc-cta-headline').value,
+      cta_sub: $id('hc-cta-sub').value,
+      footer_tagline: $id('hc-footer').value
+    });
+    toast('Home page content saved!', 'success');
+  } catch { toast('Failed to save content', 'error'); }
+}
+
+// ── About Page Content ────────────────────────────
+async function loadAboutContent() {
+  try {
+    const d = await req('GET', '/content');
+    if (!d) return;
+    $id('ac-headline').value = d.about_headline || '';
+    $id('ac-sub').value = d.about_sub || '';
+    $id('ac-story-title').value = d.story_title || '';
+    $id('ac-story-p1').value = d.story_p1 || '';
+    $id('ac-story-p2').value = d.story_p2 || '';
+    $id('ac-photo').value = d.about_photo || '';
+    if (d.about_photo) previewPhoto(d.about_photo);
+  } catch(e) { toast('Failed to load about content', 'error'); }
+}
+
+async function saveAboutContent() {
+  try {
+    await req('PUT', '/content', {
+      about_headline: $id('ac-headline').value,
+      about_sub: $id('ac-sub').value,
+      story_title: $id('ac-story-title').value,
+      story_p1: $id('ac-story-p1').value,
+      story_p2: $id('ac-story-p2').value,
+      about_photo: $id('ac-photo').value
+    });
+    toast('About page saved!', 'success');
+  } catch { toast('Failed to save', 'error'); }
+}
+
+function previewPhoto(url) {
+  if (!url) return;
+  $id('photo-preview').style.display = 'block';
+  $id('photo-img').src = url;
+}
+
+// ── FAQs ──────────────────────────────────────────
+async function loadFaqs() {
+  try {
+    const faqs = await req('GET', '/faqs');
+    if (!faqs) return;
+    $id('faqs-table').innerHTML = faqs.length
+      ? faqs.map((f,i) => `<tr>
+          <td>${i+1}</td>
+          <td style="max-width:320px;font-size:13px">${sanitize(f.question)}</td>
+          <td><span class="tag ${f.isActive?'tag-green':'tag-gray'}">${f.isActive?'Active':'Hidden'}</span></td>
+          <td><div style="display:flex;gap:6px">
+            <button class="btn btn-secondary btn-xs" onclick="editFaq('${f._id}')">Edit</button>
+            <button class="btn btn-danger btn-xs" onclick="deleteFaq('${f._id}')">Delete</button>
+          </div></td>
+        </tr>`).join('')
+      : '<tr><td colspan="4" style="text-align:center;padding:24px;color:var(--text3)">No FAQs yet</td></tr>';
+  } catch(e) { toast('Failed to load FAQs', 'error'); }
+}
+
+let _faqs = [];
+async function editFaq(id) {
+  const faqs = await req('GET', '/faqs');
+  if (!faqs) return;
+  _faqs = faqs;
+  const f = faqs.find(x => x._id === id);
+  if (!f) return;
+  $id('faq-edit-id').value = f._id;
+  $id('faq-modal-title').textContent = 'Edit FAQ';
+  $id('faq-q').value = f.question;
+  $id('faq-a').value = f.answer;
+  $id('faq-active').value = String(f.isActive !== false);
+  $id('faq-modal').classList.remove('hidden');
+}
+
+function openFaqModal() {
+  $id('faq-edit-id').value = '';
+  $id('faq-modal-title').textContent = 'Add FAQ';
+  $id('faq-q').value = ''; $id('faq-a').value = '';
+  $id('faq-active').value = 'true';
+  $id('faq-modal').classList.remove('hidden');
+}
+
+async function saveFaq() {
+  const q = $id('faq-q').value.trim();
+  const a = $id('faq-a').value.trim();
+  if (!q || !a) { toast('Question and answer are required', 'error'); return; }
+  const id = $id('faq-edit-id').value;
+  try {
+    if (id) await req('PUT', `/faqs/${id}`, { question: q, answer: a, isActive: $id('faq-active').value === 'true' });
+    else await req('POST', '/faqs', { question: q, answer: a, isActive: true });
+    closeModal('faq-modal');
+    toast('FAQ saved!', 'success');
+    loadFaqs();
+  } catch(e) { toast('Failed to save FAQ: ' + e.message, 'error'); }
+}
+
+async function deleteFaq(id) {
+  if (!confirm('Delete this FAQ?')) return;
+  try { await req('DELETE', `/faqs/${id}`); toast('FAQ deleted', 'success'); loadFaqs(); }
+  catch { toast('Failed to delete', 'error'); }
+}
+
+// ── Testimonials ──────────────────────────────────
+async function loadTestimonials() {
+  try {
+    const ts = await req('GET', '/testimonials');
+    if (!ts) return;
+    $id('testimonials-table').innerHTML = ts.length
+      ? ts.map(t => `<tr>
+          <td><strong>${sanitize(t.name)}</strong></td>
+          <td style="color:var(--text2);font-size:13px">${sanitize(t.role)}</td>
+          <td style="max-width:240px;font-size:12px;color:var(--text3)">"${sanitize(t.quote).substring(0,60)}…"</td>
+          <td><span class="tag ${t.isActive?'tag-green':'tag-gray'}">${t.isActive?'Active':'Hidden'}</span></td>
+          <td><div style="display:flex;gap:6px">
+            <button class="btn btn-secondary btn-xs" onclick="editTestimonial('${t._id}')">Edit</button>
+            <button class="btn btn-danger btn-xs" onclick="deleteTestimonial('${t._id}')">Delete</button>
+          </div></td>
+        </tr>`).join('')
+      : '<tr><td colspan="5" style="text-align:center;padding:24px;color:var(--text3)">No testimonials yet</td></tr>';
+  } catch(e) { toast('Failed to load testimonials', 'error'); }
+}
+
+let _testimonials = [];
+async function editTestimonial(id) {
+  const ts = await req('GET', '/testimonials');
+  if (!ts) return;
+  const t = ts.find(x => x._id === id);
+  if (!t) return;
+  $id('t-edit-id').value = t._id;
+  $id('t-modal-title').textContent = 'Edit Testimonial';
+  $id('t-name').value = t.name;
+  $id('t-role').value = t.role;
+  $id('t-initials').value = t.initials || '';
+  $id('t-quote').value = t.quote;
+  $id('t-active').value = String(t.isActive !== false);
+  $id('testimonial-modal').classList.remove('hidden');
+}
+
+function openTestimonialModal() {
+  $id('t-edit-id').value = '';
+  $id('t-modal-title').textContent = 'Add Testimonial';
+  ['t-name','t-role','t-initials','t-quote'].forEach(id => $id(id).value = '');
+  $id('t-active').value = 'true';
+  $id('testimonial-modal').classList.remove('hidden');
+}
+
+async function saveTestimonial() {
+  const name = $id('t-name').value.trim();
+  const quote = $id('t-quote').value.trim();
+  if (!name || !quote) { toast('Name and quote are required', 'error'); return; }
+  const id = $id('t-edit-id').value;
+  const body = { name, role: $id('t-role').value, initials: $id('t-initials').value || name.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2), quote, isActive: $id('t-active').value === 'true' };
+  try {
+    if (id) await req('PUT', `/testimonials/${id}`, body);
+    else await req('POST', '/testimonials', body);
+    closeModal('testimonial-modal');
+    toast('Testimonial saved!', 'success');
+    loadTestimonials();
+  } catch(e) { toast('Failed to save: ' + e.message, 'error'); }
+}
+
+async function deleteTestimonial(id) {
+  if (!confirm('Delete this testimonial?')) return;
+  try { await req('DELETE', `/testimonials/${id}`); toast('Deleted', 'success'); loadTestimonials(); }
+  catch { toast('Failed to delete', 'error'); }
+}
+
+// ── Feedback ──────────────────────────────────────
+async function loadFeedback(status) {
+  try {
+    const url = status ? `/feedback?status=${status}` : '/feedback';
+    const d = await req('GET', url);
+    if (!d) return;
+    $id('feedback-table').innerHTML = d.items.length
+      ? d.items.map(f => `<tr style="cursor:pointer" onclick="openFeedback('${f._id}')">
+          <td><strong>${sanitize(f.name)}</strong><br><span style="font-size:11px;color:var(--text3)">${sanitize(f.email)}</span></td>
+          <td>${sanitize(f.subject)}</td>
+          <td>${'⭐'.repeat(f.rating||0)||'—'}</td>
+          <td style="font-size:12px;color:var(--text3)">${fmt(f.createdAt)}</td>
+          <td><span class="tag ${f.status==='new'?'tag-red':f.status==='replied'?'tag-green':'tag-gray'}">${f.status}</span></td>
+          <td><button class="btn btn-danger btn-xs" onclick="event.stopPropagation();deleteFeedback('${f._id}')">Delete</button></td>
+        </tr>`).join('')
+      : '<tr><td colspan="6" style="text-align:center;padding:24px;color:var(--text3)">No feedback found</td></tr>';
+  } catch(e) { toast('Failed to load feedback', 'error'); }
+}
+
+async function openFeedback(id) {
+  currentFeedbackId = id;
+  const d = await req('GET', '/feedback');
+  if (!d) return;
+  const f = d.items.find(x => x._id === id);
+  if (!f) return;
+  $id('fd-subject').textContent = f.subject;
+  $id('fd-from').textContent = f.name;
+  $id('fd-email').textContent = f.email;
+  $id('fd-email').href = `mailto:${f.email}`;
+  $id('fd-rating').textContent = f.rating ? '⭐'.repeat(f.rating) + ` (${f.rating}/5)` : 'No rating';
+  $id('fd-date').textContent = fmt(f.createdAt);
+  $id('fd-message').textContent = f.message;
+  $id('fd-reply-btn').href = `mailto:${f.email}?subject=Re: ${encodeURIComponent(f.subject)}`;
+  $id('feedback-detail').style.display = 'block';
+  $id('feedback-detail').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  if (f.status === 'new') await markFeedback(id, 'read');
+}
+
+async function markFeedback(id, status) {
+  try { await req('PATCH', `/feedback/${id}`, { status }); loadFeedback(''); }
+  catch {}
+}
+
+async function deleteFeedback(id) {
+  if (!confirm('Delete this feedback message?')) return;
+  try {
+    await req('DELETE', `/feedback/${id}`);
+    $id('feedback-detail').style.display = 'none';
+    toast('Feedback deleted', 'success');
+    loadFeedback('');
+  } catch { toast('Failed to delete', 'error'); }
+}
+</script>
+</body>
+</html>
