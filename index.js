@@ -66,7 +66,8 @@ app.use('/api/', apiLimiter);
 
 // ── Routes ────────────────────────────────────────
 app.use('/api/auth', require('./routes/auth'));
-app.use('/api/admin', require('./routes/admin'));
+const adminRoutes = require('./routes/admin');
+app.use('/api/admin', adminRoutes);
 
 const cvRoutes = require('./routes/cv');
 app.use('/api/cv', cvRoutes);
@@ -96,10 +97,17 @@ app.use((err, _req, res, _next) => {
 
 // ── Connect DB & start ────────────────────────────
 const PORT = process.env.PORT || 3001;
+const adminRoutes = require('./routes/admin');
 
 // Connect to MongoDB (non-blocking for serverless)
 mongoose.connect(process.env.MONGODB_URI)
-  .then(() => console.log('✅ MongoDB connected'))
+  .then(async () => {
+    console.log('✅ MongoDB connected');
+    // Initialize admin account after DB connects
+    if (adminRoutes.ensureAdmin) {
+      await adminRoutes.ensureAdmin();
+    }
+  })
   .catch(err => console.error('❌ MongoDB connection failed:', err.message));
 
 // Only call app.listen() in development or non-Vercel environments

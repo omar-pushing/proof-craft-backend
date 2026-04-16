@@ -20,7 +20,9 @@ async function ensureAdmin() {
     }
   } catch (e) { console.error('Admin seed error:', e.message); }
 }
-ensureAdmin();
+
+// Don't call on module load - will be called from index.js after DB connects
+// ensureAdmin();
 
 // POST /api/admin/login
 router.post('/login',
@@ -245,3 +247,4 @@ router.delete('/users/:id', requireAdmin, async (req, res) => {
 });
 
 module.exports = router;
+module.exports.ensureAdmin = ensureAdmin;
