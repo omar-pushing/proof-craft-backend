@@ -77,94 +77,171 @@ router.get('/dashboard', requireAdmin, async (req, res) => {
 
 // ── FAQs ──────────────────────────────────────────
 router.get('/faqs', requireAdmin, async (_, res) => {
-  res.json(await FAQ.find().sort({ order: 1, createdAt: 1 }).lean());
+  try {
+    const faqs = await FAQ.find().sort({ order: 1, createdAt: 1 }).lean();
+    res.json(faqs);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Server error.' });
+  }
 });
 router.post('/faqs', requireAdmin,
   [body('question').trim().notEmpty().escape(), body('answer').trim().notEmpty()],
   async (req, res) => {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });
-    const faq = await FAQ.create(req.body);
-    res.status(201).json(faq);
+    try {
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });
+      const faq = await FAQ.create(req.body);
+      res.status(201).json(faq);
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ error: 'Server error.' });
+    }
   }
 );
 router.put('/faqs/:id', requireAdmin, async (req, res) => {
-  const faq = await FAQ.findByIdAndUpdate(req.params.id, { ...req.body, updatedAt: new Date() }, { new: true });
-  if (!faq) return res.status(404).json({ error: 'Not found' });
-  res.json(faq);
+  try {
+    const faq = await FAQ.findByIdAndUpdate(req.params.id, { ...req.body, updatedAt: new Date() }, { new: true });
+    if (!faq) return res.status(404).json({ error: 'Not found' });
+    res.json(faq);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Server error.' });
+  }
 });
 router.delete('/faqs/:id', requireAdmin, async (req, res) => {
-  await FAQ.findByIdAndDelete(req.params.id);
-  res.json({ ok: true });
+  try {
+    await FAQ.findByIdAndDelete(req.params.id);
+    res.json({ ok: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Server error.' });
+  }
 });
 
 // ── Testimonials ──────────────────────────────────
 router.get('/testimonials', requireAdmin, async (_, res) => {
-  res.json(await Testimonial.find().sort({ order: 1 }).lean());
+  try {
+    const t = await Testimonial.find().sort({ order: 1 }).lean();
+    res.json(t);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Server error.' });
+  }
 });
 router.post('/testimonials', requireAdmin,
   [body('name').trim().notEmpty(), body('quote').trim().notEmpty()],
   async (req, res) => {
-    const t = await Testimonial.create(req.body);
-    res.status(201).json(t);
+    try {
+      const t = await Testimonial.create(req.body);
+      res.status(201).json(t);
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ error: 'Server error.' });
+    }
   }
 );
 router.put('/testimonials/:id', requireAdmin, async (req, res) => {
-  const t = await Testimonial.findByIdAndUpdate(req.params.id, req.body, { new: true });
-  res.json(t);
+  try {
+    const t = await Testimonial.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    res.json(t);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Server error.' });
+  }
 });
 router.delete('/testimonials/:id', requireAdmin, async (req, res) => {
-  await Testimonial.findByIdAndDelete(req.params.id);
-  res.json({ ok: true });
+  try {
+    await Testimonial.findByIdAndDelete(req.params.id);
+    res.json({ ok: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Server error.' });
+  }
 });
 
 // ── Site Content ──────────────────────────────────
 router.get('/content', requireAdmin, async (_, res) => {
-  const items = await SiteContent.find().lean();
-  const obj = {};
-  items.forEach(i => { obj[i.key] = i.value; });
-  res.json(obj);
+  try {
+    const items = await SiteContent.find().lean();
+    const obj = {};
+    items.forEach(i => { obj[i.key] = i.value; });
+    res.json(obj);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Server error.' });
+  }
 });
 router.put('/content', requireAdmin, async (req, res) => {
-  const updates = req.body; // { key: value, ... }
-  const ops = Object.entries(updates).map(([key, value]) =>
-    SiteContent.findOneAndUpdate({ key }, { key, value, updatedAt: new Date() }, { upsert: true, new: true })
-  );
-  await Promise.all(ops);
-  res.json({ ok: true });
+  try {
+    const updates = req.body; // { key: value, ... }
+    const ops = Object.entries(updates).map(([key, value]) =>
+      SiteContent.findOneAndUpdate({ key }, { key, value, updatedAt: new Date() }, { upsert: true, new: true })
+    );
+    await Promise.all(ops);
+    res.json({ ok: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Server error.' });
+  }
 });
 
 // ── Feedback ──────────────────────────────────────
 router.get('/feedback', requireAdmin, async (req, res) => {
-  const { status, page = 1 } = req.query;
-  const q = status ? { status } : {};
-  const [items, total] = await Promise.all([
-    Feedback.find(q).sort({ createdAt: -1 }).skip((page - 1) * 20).limit(20).lean(),
-    Feedback.countDocuments(q)
-  ]);
-  res.json({ items, total, pages: Math.ceil(total / 20) });
+  try {
+    const { status, page = 1 } = req.query;
+    const q = status ? { status } : {};
+    const [items, total] = await Promise.all([
+      Feedback.find(q).sort({ createdAt: -1 }).skip((page - 1) * 20).limit(20).lean(),
+      Feedback.countDocuments(q)
+    ]);
+    res.json({ items, total, pages: Math.ceil(total / 20) });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Server error.' });
+  }
 });
 router.patch('/feedback/:id', requireAdmin, async (req, res) => {
-  const fb = await Feedback.findByIdAndUpdate(req.params.id, { status: req.body.status }, { new: true });
-  res.json(fb);
+  try {
+    const fb = await Feedback.findByIdAndUpdate(req.params.id, { status: req.body.status }, { new: true });
+    res.json(fb);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Server error.' });
+  }
 });
 router.delete('/feedback/:id', requireAdmin, async (req, res) => {
-  await Feedback.findByIdAndDelete(req.params.id);
-  res.json({ ok: true });
+  try {
+    await Feedback.findByIdAndDelete(req.params.id);
+    res.json({ ok: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Server error.' });
+  }
 });
 
 // ── Users ──────────────────────────────────────────
 router.get('/users', requireAdmin, async (req, res) => {
-  const { page = 1 } = req.query;
-  const [users, total] = await Promise.all([
-    User.find().select('-password').sort({ createdAt: -1 }).skip((page - 1) * 20).limit(20).lean(),
-    User.countDocuments()
-  ]);
-  res.json({ users, total });
+  try {
+    const { page = 1 } = req.query;
+    const [users, total] = await Promise.all([
+      User.find().select('-password').sort({ createdAt: -1 }).skip((page - 1) * 20).limit(20).lean(),
+      User.countDocuments()
+    ]);
+    res.json({ users, total });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Server error.' });
+  }
 });
 router.delete('/users/:id', requireAdmin, async (req, res) => {
-  await User.findByIdAndDelete(req.params.id);
-  res.json({ ok: true });
+  try {
+    await User.findByIdAndDelete(req.params.id);
+    res.json({ ok: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Server error.' });
+  }
 });
 
 module.exports = router;

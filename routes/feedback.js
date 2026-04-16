@@ -44,31 +44,51 @@ const pubRouter = require('express').Router();
 const { FAQ, Testimonial, SiteContent } = require('../models');
 
 pubRouter.get('/faqs', async (_, res) => {
-  const faqs = await FAQ.find({ isActive: true }).sort({ order: 1 }).select('-__v').lean();
-  res.json(faqs);
+  try {
+    const faqs = await FAQ.find({ isActive: true }).sort({ order: 1 }).select('-__v').lean();
+    res.json(faqs);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Server error.' });
+  }
 });
 
 pubRouter.get('/testimonials', async (_, res) => {
-  const t = await Testimonial.find({ isActive: true }).sort({ order: 1 }).select('-__v').lean();
-  res.json(t);
+  try {
+    const t = await Testimonial.find({ isActive: true }).sort({ order: 1 }).select('-__v').lean();
+    res.json(t);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Server error.' });
+  }
 });
 
 pubRouter.get('/content', async (_, res) => {
-  const items = await SiteContent.find().lean();
-  const obj = {};
-  items.forEach(i => { obj[i.key] = i.value; });
-  res.json(obj);
+  try {
+    const items = await SiteContent.find().lean();
+    const obj = {};
+    items.forEach(i => { obj[i.key] = i.value; });
+    res.json(obj);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Server error.' });
+  }
 });
 
 // Real stats (public-safe, no sensitive data)
 pubRouter.get('/stats', async (_, res) => {
-  const { User, CV, CaseStudy } = require('../models');
-  const [users, cvs, cases] = await Promise.all([
-    User.countDocuments(),
-    CV.countDocuments(),
-    CaseStudy.countDocuments({ status: 'published' })
-  ]);
-  res.json({ users, cvs, publishedCases: cases });
+  try {
+    const { User, CV, CaseStudy } = require('../models');
+    const [users, cvs, cases] = await Promise.all([
+      User.countDocuments(),
+      CV.countDocuments(),
+      CaseStudy.countDocuments({ status: 'published' })
+    ]);
+    res.json({ users, cvs, publishedCases: cases });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Server error.' });
+  }
 });
 
 module.exports.pubRouter = pubRouter;
