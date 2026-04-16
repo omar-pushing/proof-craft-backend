@@ -82,7 +82,6 @@ router.get('/public/:slug', async (req, res) => {
 });
 
 module.exports = router;
-module.exports.csRouter = csRouter;
 
 // ─────────────────────────────────────────────────
 // routes/casestudy.js
