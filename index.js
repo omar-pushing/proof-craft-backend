@@ -97,18 +97,27 @@ app.use((err, _req, res, _next) => {
 
 // ── Connect DB & start ────────────────────────────
 const PORT = process.env.PORT || 3001;
-const adminRoutes = require('./routes/admin');
+
+// Only attempt MongoDB connection if URI is configured
+if (!process.env.MONGODB_URI) {
+  console.error('⚠️  MONGODB_URI not configured. Database features will not work.');
+}
 
 // Connect to MongoDB (non-blocking for serverless)
-mongoose.connect(process.env.MONGODB_URI)
-  .then(async () => {
-    console.log('✅ MongoDB connected');
-    // Initialize admin account after DB connects
-    if (adminRoutes.ensureAdmin) {
-      await adminRoutes.ensureAdmin();
-    }
+if (process.env.MONGODB_URI) {
+  mongoose.connect(process.env.MONGODB_URI, { 
+    maxPoolSize: 5,
+    serverSelectionTimeoutMS: 5000 
   })
-  .catch(err => console.error('❌ MongoDB connection failed:', err.message));
+    .then(async () => {
+      console.log('✅ MongoDB connected');
+      // Initialize admin account after DB connects
+      if (adminRoutes.ensureAdmin) {
+        await adminRoutes.ensureAdmin().catch(e => console.error('Admin init error:', e.message));
+      }
+    })
+    .catch(err => console.error('❌ MongoDB connection failed:', err.message));
+}
 
 // Only call app.listen() in development or non-Vercel environments
 if (!process.env.VERCEL) {
