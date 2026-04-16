@@ -33,7 +33,8 @@ app.use(helmet({
       objectSrc: ["'none'"]
     }
   },
-  crossOriginEmbedderPolicy: false
+  crossOriginEmbedderPolicy: false,
+  frameguard: { action: 'allow' }
 }));
 
 // ── CORS ──────────────────────────────────────────
