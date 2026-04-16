@@ -7,6 +7,16 @@ const compression = require('compression');
 const mongoose = require('mongoose');
 const { apiLimiter, sanitizeMiddleware } = require('./middleware/security');
 
+// ── Validate required env vars ─────────────────────
+const requiredEnvVars = ['MONGODB_URI', 'JWT_SECRET'];
+const missing = requiredEnvVars.filter(v => !process.env[v]);
+if (missing.length > 0) {
+  console.error(`❌ Missing required environment variables: ${missing.join(', ')}`);
+  if (process.env.NODE_ENV === 'production') {
+    console.error('Please set these variables in your Vercel project settings.');
+  }
+}
+
 const app = express();
 
 // ── Security headers ──────────────────────────────
@@ -87,14 +97,14 @@ app.use((err, _req, res, _next) => {
 // ── Connect DB & start ────────────────────────────
 const PORT = process.env.PORT || 3001;
 
+// Connect to MongoDB (non-blocking for serverless)
 mongoose.connect(process.env.MONGODB_URI)
-  .then(() => {
-    console.log('✅ MongoDB connected');
-    app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
-  })
-  .catch(err => {
-    console.error('❌ MongoDB connection failed:', err.message);
-    process.exit(1);
-  });
+  .then(() => console.log('✅ MongoDB connected'))
+  .catch(err => console.error('❌ MongoDB connection failed:', err.message));
+
+// Only call app.listen() in development or non-Vercel environments
+if (!process.env.VERCEL) {
+  app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
+}
 
 module.exports = app;
