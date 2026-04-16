@@ -65,23 +65,50 @@ app.use(sanitizeMiddleware);
 app.use('/api/', apiLimiter);
 
 // ── Routes ────────────────────────────────────────
-app.use('/api/auth', require('./routes/auth'));
-const adminRoutes = require('./routes/admin');
-app.use('/api/admin', adminRoutes);
+let adminRoutes = null;
+try {
+  app.use('/api/auth', require('./routes/auth'));
+  adminRoutes = require('./routes/admin');
+  app.use('/api/admin', adminRoutes);
 
-const cvRoutes = require('./routes/cv');
-app.use('/api/cv', cvRoutes);
-app.use('/api/casestudies', cvRoutes.csRouter);
+  const cvRoutes = require('./routes/cv');
+  app.use('/api/cv', cvRoutes);
+  app.use('/api/casestudies', cvRoutes.csRouter);
 
-const feedbackRoutes = require('./routes/feedback');
-app.use('/api/feedback', feedbackRoutes);
-const { pubRouter } = require('./routes/feedback');
-app.use('/api/public', pubRouter);
+  const feedbackRoutes = require('./routes/feedback');
+  app.use('/api/feedback', feedbackRoutes);
+  const { pubRouter } = require('./routes/feedback');
+  app.use('/api/public', pubRouter);
+} catch (err) {
+  console.error('❌ Route initialization error:', err.message);
+  console.error(err.stack);
+}
 
 // ── Admin Dashboard SPA ───────────────────────────
 const path = require('path');
-app.get('/admin', (_, res) => res.sendFile(path.join(__dirname, 'admin', 'index.html')));
-app.get('/admin/', (_, res) => res.sendFile(path.join(__dirname, 'admin', 'index.html')));
+const fs = require('fs');
+
+const adminPath = path.join(__dirname, 'admin', 'index.html');
+if (fs.existsSync(adminPath)) {
+  app.get('/admin', (_, res) => {
+    try {
+      res.sendFile(adminPath);
+    } catch (err) {
+      console.error('Admin file error:', err.message);
+      res.status(404).json({ error: 'Admin dashboard not found' });
+    }
+  });
+  app.get('/admin/', (_, res) => {
+    try {
+      res.sendFile(adminPath);
+    } catch (err) {
+      console.error('Admin file error:', err.message);
+      res.status(404).json({ error: 'Admin dashboard not found' });
+    }
+  });
+} else {
+  console.warn('⚠️  Admin dashboard not found at', adminPath);
+}
 
 // ── Health check ──────────────────────────────────
 app.get('/api/health', (_, res) => res.json({ status: 'ok', ts: new Date().toISOString() }));
@@ -111,9 +138,13 @@ if (process.env.MONGODB_URI) {
   })
     .then(async () => {
       console.log('✅ MongoDB connected');
-      // Initialize admin account after DB connects
-      if (adminRoutes.ensureAdmin) {
-        await adminRoutes.ensureAdmin().catch(e => console.error('Admin init error:', e.message));
+      // Initialize admin account after DB connects (if adminRoutes loaded successfully)
+      if (adminRoutes && adminRoutes.ensureAdmin) {
+        try {
+          await adminRoutes.ensureAdmin();
+        } catch (e) {
+          console.error('Admin init error:', e.message);
+        }
       }
     })
     .catch(err => console.error('❌ MongoDB connection failed:', err.message));
