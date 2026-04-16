@@ -359,6 +359,7 @@ async function req(method, path, body) {
 
 // ── Login ────────────────────────────────────────
 async function doLogin(e) {
+  console.log('doLogin called');
   e.preventDefault();
   const btn = $id('login-btn');
   btn.textContent = 'Signing in…'; btn.disabled = true;
