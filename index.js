@@ -1,4 +1,3 @@
-// index.js — ProofCraft Backend
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
@@ -7,7 +6,6 @@ const compression = require('compression');
 const mongoose = require('mongoose');
 const { apiLimiter, sanitizeMiddleware } = require('./middleware/security');
 
-// ── Validate required env vars ─────────────────────
 const requiredEnvVars = ['MONGODB_URI', 'JWT_SECRET'];
 const missing = requiredEnvVars.filter(v => !process.env[v]);
 if (missing.length > 0) {
@@ -18,8 +16,9 @@ if (missing.length > 0) {
 }
 
 const app = express();
+// Trust first proxy for secure cookies when behind a proxy (like Vercel)
+app.set('trust proxy', 1);
 
-// ── Security headers ──────────────────────────────
 app.use(helmet({
   contentSecurityPolicy: {
     directives: {
@@ -36,13 +35,13 @@ app.use(helmet({
   crossOriginEmbedderPolicy: false
 }));
 
-// ── CORS ──────────────────────────────────────────
 const allowedOrigins = [
   process.env.FRONTEND_URL || 'https://proofcraft.online',
   'https://proof-craft-backend.vercel.app',
   'http://localhost:3000',
   'http://localhost:5173'
 ];
+
 app.use(cors({
   origin: (origin, cb) => {
     if (!origin || allowedOrigins.includes(origin)) cb(null, true);
@@ -52,21 +51,19 @@ app.use(cors({
   allowedHeaders: ['Content-Type','Authorization'],
   credentials: true
 }));
+
 app.options('*', cors());
 
-// ── Body & compression ────────────────────────────
 app.use(compression());
 app.use(express.json({ limit: '1mb' }));
 app.use(express.urlencoded({ extended: true, limit: '1mb' }));
 
-// ── Sanitize all input ────────────────────────────
 app.use(sanitizeMiddleware);
 
-// ── Global rate limit ─────────────────────────────
 app.use('/api/', apiLimiter);
 
-// ── Routes ────────────────────────────────────────
 let adminRoutes = null;
+
 try {
   app.use('/api/auth', require('./routes/auth'));
   adminRoutes = require('./routes/admin');
@@ -85,11 +82,11 @@ try {
   console.error(err.stack);
 }
 
-// ── Admin Dashboard SPA ───────────────────────────
 const path = require('path');
 const fs = require('fs');
 
 const adminPath = path.join(__dirname, 'admin', 'index.html');
+
 if (fs.existsSync(adminPath)) {
   app.get('/admin', (_, res) => {
     try {
@@ -99,6 +96,7 @@ if (fs.existsSync(adminPath)) {
       res.status(404).json({ error: 'Admin dashboard not found' });
     }
   });
+
   app.get('/admin/', (_, res) => {
     try {
       res.sendFile(adminPath);
@@ -107,31 +105,23 @@ if (fs.existsSync(adminPath)) {
       res.status(404).json({ error: 'Admin dashboard not found' });
     }
   });
-} else {
-  console.warn('⚠️  Admin dashboard not found at', adminPath);
 }
 
-// ── Health check ──────────────────────────────────
 app.get('/api/health', (_, res) => res.json({ status: 'ok', ts: new Date().toISOString() }));
 
-// ── 404 ───────────────────────────────────────────
 app.use((_, res) => res.status(404).json({ error: 'Route not found' }));
 
-// ── Error handler ─────────────────────────────────
 app.use((err, _req, res, _next) => {
   console.error(err.stack);
   res.status(500).json({ error: process.env.NODE_ENV === 'production' ? 'Internal server error' : err.message });
 });
 
-// ── Connect DB & start ────────────────────────────
 const PORT = process.env.PORT || 3001;
 
-// Only attempt MongoDB connection if URI is configured
 if (!process.env.MONGODB_URI) {
   console.error('⚠️  MONGODB_URI not configured. Database features will not work.');
 }
 
-// Connect to MongoDB (non-blocking for serverless)
 if (process.env.MONGODB_URI) {
   mongoose.connect(process.env.MONGODB_URI, { 
     maxPoolSize: 5,
@@ -139,7 +129,6 @@ if (process.env.MONGODB_URI) {
   })
     .then(async () => {
       console.log('✅ MongoDB connected');
-      // Initialize admin account after DB connects (if adminRoutes loaded successfully)
       if (adminRoutes && adminRoutes.ensureAdmin) {
         try {
           await adminRoutes.ensureAdmin();
@@ -151,7 +140,6 @@ if (process.env.MONGODB_URI) {
     .catch(err => console.error('❌ MongoDB connection failed:', err.message));
 }
 
-// Only call app.listen() in development or non-Vercel environments
 if (!process.env.VERCEL) {
   app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
 }
